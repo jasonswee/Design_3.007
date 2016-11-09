@@ -44,7 +44,7 @@ boolean checkPreviousOpBPMRange = false;
 //int lowBPMRate = 200;
 const int opLowBPM = 60;
 const int opHighBPM = 120;
-const int sleepBPM = 90;
+const int sleepBPM = 65;
 int recordedBPM = 0;
 
 
@@ -128,7 +128,7 @@ void loop(){
 }
 void checkHeartBPMCondition(){
   debugTool();
-  recordedBPM = 80;//BPM;
+  recordedBPM = BPM;//80;//BPM;
   if(recordedBPM<opHighBPM&&recordedBPM>opLowBPM ){ //Check BPM at operating range
     checkOpBPMRange = true;
     if(checkOpBPMRange == true && checkPreviousOpBPMRange == false){//Check UPDATED BPM is at operating range
@@ -260,10 +260,11 @@ imu.read();
     count++;
   }
   total = (map(imu.a.x,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.y,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.z,rawLow, rawHigh,remapLow,remapHigh) )/3;
-  Serial.println("Acceleration");
-  Serial.println(total);
+  //Serial.println("Acceleration");
+  //Serial.println(total);
   if(abs(pastTotal-total)>2){
-    Serial.println(total);
+    Serial.println("Acceleration: ");
+    Serial.println(pastTotal-total);
     Serial.println("You jerked!");
     checkAwake = false;
   }
