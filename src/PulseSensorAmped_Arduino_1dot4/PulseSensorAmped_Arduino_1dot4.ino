@@ -109,19 +109,9 @@ void setup(){
 
 //  Where the Magic Happens
 void loop(){
-  
-//    serialOutput() ;      
-  if (QS == true){     // A Heartbeat Was Found
-                       // BPM and IBI have been Determined
-                       // Quantified Self "QS" true when arduino finds a heartbeat
-        //fadeRate = 255;         // Makes the LED Fade Effect Happen
-                                // Set 'fadeRate' Variable to 255 to fade LED with pulse
-        //serialOutputWhenBeatHappens();   // A Beat Happened, Output that to serial.     
-        QS = false;                      // reset the Quantified Self flag for next time    
-  
-  }//End QS
   checkHeartBPMCondition();
-  checkUserAsleep();
+  
+   if checkUserAsleep();
   checkUserAwake();
   delay(20);                             //  take a break
   
@@ -129,7 +119,7 @@ void loop(){
 void checkHeartBPMCondition(){
   debugTool();
   recordedBPM = 80;//BPM;
-  if(recordedBPM<opHighBPM&&recordedBPM>opLowBPM ){ //Check BPM at operating range
+  if(recordedBPM<opHighBPM && recordedBPM>opLowBPM ){ //Check BPM at operating range
     checkOpBPMRange = true;
     if(checkOpBPMRange == true && checkPreviousOpBPMRange == false){//Check UPDATED BPM is at operating range
       Serial.print("Heart beat detected!!! <3 <3 <3 BPM: ");  
