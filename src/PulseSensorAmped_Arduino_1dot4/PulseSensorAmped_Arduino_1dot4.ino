@@ -44,7 +44,7 @@ boolean checkPreviousOpBPMRange = false;
 //int lowBPMRate = 200;
 const int opLowBPM = 60;
 const int opHighBPM = 120;
-const int sleepBPM = 65;
+const int sleepBPM = 100;
 int recordedBPM = 0;
 
 
@@ -54,7 +54,7 @@ int buttonState = 0;         // variable for reading the pushbutton status
 boolean checkLEDStatus = false;
 
 //Led for LED stimulus Progress 3
-int ledPin = 1;
+int ledPin = 11;
 
 //Buzzer for sound stimulus Progress 4
 const int buzzerPin = 1;
@@ -165,7 +165,7 @@ void checkUserAwake(){
   if(checkAwake==true){
     accelCount = 0;
     while(checkAwake==true){
-        buttonFeedback();
+        //buttonFeedback();
         accelJerkFeedback();
         
     }
@@ -262,7 +262,7 @@ imu.read();
   total = (map(imu.a.x,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.y,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.z,rawLow, rawHigh,remapLow,remapHigh) )/3;
   //Serial.println("Acceleration");
   //Serial.println(total);
-  if(abs(pastTotal-total)>2){
+  if(abs(pastTotal-total)>5){
     Serial.println("Acceleration: ");
     Serial.println(pastTotal-total);
     Serial.println("You jerked!");
