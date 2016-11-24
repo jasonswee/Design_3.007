@@ -44,7 +44,7 @@ boolean checkPreviousOpBPMRange = false;
 //int lowBPMRate = 200;
 const int opLowBPM = 60;
 const int opHighBPM = 120;
-const int sleepBPM = 100;
+const int sleepBPM = 90;
 int recordedBPM = 0;
 
 
@@ -57,7 +57,7 @@ boolean checkLEDStatus = false;
 int ledPin = 11;
 
 //Buzzer for sound stimulus Progress 4
-const int buzzerPin = 1;
+const int buzzerPin = 12;
 
 //Buzzer for vibration stimulus Progress 4
 const int motorPin = 10;
@@ -121,6 +121,7 @@ void loop(){
   
   }//End QS
   checkHeartBPMCondition();
+  Serial.println(recordedBPM);
   checkUserAsleep();
   checkUserAwake();
   delay(20);                             //  take a break
@@ -151,7 +152,7 @@ void checkUserAsleep(){
       Serial.print("You are sleepy, tired bitch! ");
       Serial.print("Sleepy heartrate: ");
       Serial.println(recordedBPM);
-      Serial.println("Press button to stop Stimulus! Dick head!");
+      Serial.println("Press button to stop Stimulus!!");
       checkAwake=true;    
       checklightStimulus();
       checkBuzzerStimulus();
@@ -205,11 +206,13 @@ void debugTool(){
 
 void checkBuzzerStimulus(){
   if(checkAwake == true){
-    analogWrite(buzzerPin, 244);
+    //analogWrite(buzzerPin, 244);
+    //tone(buzzerPin, 4978);
     Serial.println("BUZZER is On!");
   }
   else{
-    analogWrite(buzzerPin,0);
+    //analogWrite(buzzerPin,0);
+    //noTone(buzzerPin);
     Serial.println("Buzzer is OFF!");
   }
 }
@@ -254,15 +257,16 @@ imu.read();
   }
   pastTotal = total;
   //Serial.println(readX);*/
-  if(accelCount ==0){
+  if(accelCount == 0){
     pastTotal = total;
     //pastTotalDet = totalDet;
     count++;
   }
+  //Serial.println(pastTotal-total);
   total = (map(imu.a.x,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.y,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.z,rawLow, rawHigh,remapLow,remapHigh) )/3;
   //Serial.println("Acceleration");
   //Serial.println(total);
-  if(abs(pastTotal-total)>5){
+  if(abs(pastTotal-total)>3){
     Serial.println("Acceleration: ");
     Serial.println(pastTotal-total);
     Serial.println("You jerked!");
