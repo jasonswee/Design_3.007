@@ -14,7 +14,7 @@ https://github.com/WorldFamousElectronics/PulseSensor_Amped_Arduino/blob/master/
 */
 
 //  Variables
-int pulsePin = 0;                 // Pulse Sensor purple wire connected to analog pin 0
+int pulsePin = 7;                 // Pulse Sensor purple wire connected to analog pin 0
 int blinkPin = 13;                // pin to blink led at each beat
 int fadePin = 5;                  // pin to do fancy classy fading blink at each beat
 int fadeRate = 0;                 // used to fade LED on with PWM on fadePin
@@ -27,8 +27,9 @@ volatile boolean Pulse = false;     // "True" when User's live heartbeat is dete
 volatile boolean QS = false;        // becomes true when Arduoino finds a beat.
 
 // Regards Serial OutPut  -- Set This Up to your needs
-static boolean serialVisual = false;   // Set to 'false' by Default.  Re-set to 'true' to see Arduino Serial Monitor ASCII Visual Pulse 
+static boolean serialVisual = true;   // Set to 'false' by Default.  Re-set to 'true' to see Arduino Serial Monitor ASCII Visual Pulse 
 
+int recordedBPM = 0;
 
 void setup(){
   pinMode(blinkPin,OUTPUT);         // pin that will blink to your heartbeat!
@@ -46,7 +47,7 @@ void loop(){
   
     serialOutput() ;       
     
-  if (QS == true){     // A Heartbeat Was Found
+  /*if (QS == true){     // A Heartbeat Was Found
                        // BPM and IBI have been Determined
                        // Quantified Self "QS" true when arduino finds a heartbeat
         fadeRate = 255;         // Makes the LED Fade Effect Happen
@@ -54,9 +55,11 @@ void loop(){
         serialOutputWhenBeatHappens();   // A Beat Happened, Output that to serial.     
         QS = false;                      // reset the Quantified Self flag for next time    
   }
-     
-  ledFadeToBeat();                      // Makes the LED Fade Effect Happen 
-  delay(20);                             //  take a break
+     */
+     recordedBPM = BPM;
+     Serial.println(recordedBPM);
+  //ledFadeToBeat();                      // Makes the LED Fade Effect Happen 
+  delay(1000);                             //  take a break
 }
 
 

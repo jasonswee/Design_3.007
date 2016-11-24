@@ -48,7 +48,7 @@ const int sensorMax = 1024;    // sensor maximum, discovered through experiment
 
   // do something different depending on the 
   // range value:
-  switch (range) {
+  /*switch (range) {
   case 0:     
     Serial.println("");     /////ASCII Art Madness
     break;
@@ -86,7 +86,7 @@ const int sensorMax = 1024;    // sensor maximum, discovered through experiment
     Serial.println("--------------|-----------------------");
     break;
   
-  } 
+  } */
 }
 
 
