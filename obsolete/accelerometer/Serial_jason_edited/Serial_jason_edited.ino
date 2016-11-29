@@ -35,6 +35,7 @@ void setup()
 {
   Serial.begin(9600);
   Wire.begin();
+  Serial.print("test");
 
   if (!imu.init())
   {
@@ -54,10 +55,10 @@ void loop()
   snprintf(report, sizeof(report), "Accelerometer: x: %6d y: %6d z: %6d",
   imu.a.x, imu.a.y, imu.a.z);
   //Serial.println(report);
-
-  total = (map(imu.a.x,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.y,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.z,rawLow, rawHigh,remapLow,remapHigh) )/3;
   
-  if(abs(pastTotal-total)>2){
+  total = (map(imu.a.x,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.y,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.z,rawLow, rawHigh,remapLow,remapHigh) )/3;
+ Serial.println(total);
+  if(abs(pastTotal-total)>3){
   Serial.println(total);
   Serial.println("You jerked!");
   }
