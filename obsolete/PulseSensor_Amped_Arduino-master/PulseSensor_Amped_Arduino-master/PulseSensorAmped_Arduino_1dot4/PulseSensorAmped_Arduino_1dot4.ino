@@ -14,7 +14,7 @@ https://github.com/WorldFamousElectronics/PulseSensor_Amped_Arduino/blob/master/
 */
 
 //  Variables
-int pulsePin = 7;                 // Pulse Sensor purple wire connected to analog pin 0
+int pulsePin = 5;                 // Pulse Sensor purple wire connected to analog pin 0
 int blinkPin = 13;                // pin to blink led at each beat
 int fadePin = 5;                  // pin to do fancy classy fading blink at each beat
 int fadeRate = 0;                 // used to fade LED on with PWM on fadePin

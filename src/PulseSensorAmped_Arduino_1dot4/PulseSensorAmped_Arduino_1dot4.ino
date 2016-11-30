@@ -19,7 +19,7 @@ LSM6 imu;
 
 
 //  Pulse Variables
-int pulsePin = 7;                 // Pulse Sensor purple wire connected to analog pin 0
+int pulsePin = A7;                 // Pulse Sensor purple wire connected to analog pin 7
 //int blinkPin = 13;                // pin to blink led at each beat
 //int fadePin = 5;                  // pin to do fancy classy fading blink at each beat
 //int fadeRate = 0;                 // used to fade LED on with PWM on fadePin
@@ -42,50 +42,42 @@ boolean checkAwake = false;
 boolean checkOpBPMRange = false;
 boolean checkPreviousOpBPMRange = false;
 //int lowBPMRate = 200;
-const int opLowBPM = 30;
-const int opHighBPM = 180;
-const int sleepBPM = 70;
+const int opLowBPM = 40;
+const int opHighBPM = 100;
+const int sleepBPM = 50;
 int recordedBPM = 0;
-
-
-//Button for feedback of Button Progress 2
-//const int buttonPin = 12;     // the number of the pushbutton pin
-//int buttonState = 0;         // variable for reading the pushbutton status
-boolean checkLEDStatus = false;
 
 //Led for LED stimulus Progress 3
 const int ledRPin = A3;
 const int ledBPin = A2;
 const int ledGPin = A1;
-int ledIntensity = 150; //1-254
+int ledIntensity = 150; //150-254
 
 //Vibrator motor for vibration stimulus Progress 4
 const int motorPin = A0;
-int motorIntensity = 140; //0-255
+int motorIntensity = 254; //150-254
 
 //Jerking motion for feedback Progress 6
 char report[80];
 volatile int reading[3]={0, 0, 0};
-volatile int total=0;
-volatile int pastTotal = 0;
-volatile int totalDet=0;
-volatile int pastTotalDet = 0;
-volatile int readX = 0;
-volatile int pastX = 0;
-
-volatile int rawLow = -32768;
-volatile int rawHigh = 32767;
-volatile int remapLow = 0;
-volatile int remapHigh = 20;
-volatile int accelCount = 0;
+int total=0;
+int pastTotal = 0;
+//Accelerometer
+const int rawLow = -32768;
+const int rawHigh = 32767;
+const int remapLow = 0;
+const int remapHigh = 10;
+int accelCount = 0;
+const int accDiffThreshold = 2;
 
 //Flex Sensor
-int flexVoltageThreshold = 6900;
+int flexVoltageThreshold = 7000;
 const int flexPin = A6;    
 const int rawAnalogLow = 0;
 const int rawAnalogHigh = 1023;
 const int remapFlexLow = 0;
 const int remapFlexHigh = 10000;
+
 
 void setup(){
   Serial.begin(115200);             // we agree to talk fast!
@@ -99,50 +91,77 @@ void setup(){
   Wire.begin();
   if (!imu.init()){
     Serial.println("Failed to detect and initialize IMU!");
+    offAllStimulus();
+    checkLightStimulus(true, 'B');
     while (1);
   }
   imu.enableDefault();
+
+  int delayms = 1000;
   for(int i = 2; i<31;i=i){ //Start up light
     analogWrite(ledRPin, ledIntensity);
-    delay(1000/i);
+    delay(delayms/i);
     analogWrite(ledRPin, 0);
-    delay(1000/(i++));
+    delay(delayms/(i++));
     analogWrite(ledGPin, ledIntensity);
-    delay(1000/(i++));
+    delay(delayms/(i++));
     analogWrite(ledGPin, 0);
-    delay(1000/(i++));
+    delay(delayms/(i++));
     analogWrite(ledBPin, ledIntensity);
-    delay(1000/(i++));
+    delay(delayms/(i++));
     analogWrite(ledBPin, 0);
-    delay(1000/(i++));
+    delay(delayms/(i++));
   }
   
 }
 
 void loop(){
-  while(checkAwake == false){//exit when require t
+  for(int i = 10; checkAwake == false; i++){//exit when require t
     recordedBPM = checkHeartBPMWithinOperatingRange(BPM);
-    checkAwake = checkBPMBelowThreshold(recordedBPM);
+    delay(1000);
+    if(i==15){
+      checkLightStimulus(true, 'B');
+      checkLightStimulus(true, 'G');
+      //delay(200);
+      //offAllStimulus();
+      i=10;
+    }
+    
+    if(checkFlexStatus() == false ){
+      i=0;
+      offAllStimulus();
+    }
+    
+    if(recordedBPM != -1){
+      checkAwake = checkBPMBelowThreshold(recordedBPM);
+    }
+    
   }
+  offAllStimulus();
   checkUserAwake();
-  delay(1000); //take 5 seconds break before rechecking
+  delay(5000); //take 5 seconds break before rechecking
 
   //Test cases
-  //testCases(1);//1 test light. 2 test Vibration. 3 test Heart Rate Sensor. 4 test Accelerometer. 5 Flex Sensor
+  //delay(1000);
+  //testCases(5);//1 test light. 2 test Vibration. 3 test Heart Rate Sensor. 4 test Accelerometer. 5 Flex Sensor
 }
 boolean checkFlexStatus(){
   if(map(analogRead(flexPin), rawAnalogLow, rawAnalogHigh, remapFlexLow, remapFlexHigh)<flexVoltageThreshold){
     Serial.println("--Flex sensor flexed--");
+    Serial.println(map(analogRead(flexPin), rawAnalogLow, rawAnalogHigh, remapFlexLow, remapFlexHigh));
     return false;
   }
   Serial.println("Flex sensor is un-flexed! Check awake now!");
+  Serial.println(map(analogRead(flexPin), rawAnalogLow, rawAnalogHigh, remapFlexLow, remapFlexHigh));
   return true;
 }
 int checkHeartBPMWithinOperatingRange(int registeredBPM){
   if(registeredBPM<opHighBPM&&registeredBPM>opLowBPM ){
     Serial.print("Heart beat detected! BPM: ");  
     Serial.println(registeredBPM);
+    return registeredBPM;
   }
+  return -1; //Not within range thus negative value
 }
 boolean checkBPMBelowThreshold(int registeredBPM){
   if(registeredBPM < sleepBPM && checkFlexStatus() == true){
@@ -151,25 +170,45 @@ boolean checkBPMBelowThreshold(int registeredBPM){
     Serial.println(registeredBPM);
     Serial.println("Jerk off to stop Stimulus!!");
     checkAwake=true;    
-    checkVibrationStimulus(true);
-    checkLightStimulus(true, 'R');
     return true;
   }
-  
+  //Serial.print("Healthy BPM!!");
+  //Serial.println(registeredBPM);
   return false;
 }
+
 
 void checkUserAwake(){
   if(checkAwake==true){
     accelCount = 0;
-    while(checkAwake==true){
-        checkAwake = accelJerkFeedback();
+    for(int i = 0; i < 1500;i++){//pre-warning 
+      checkLightStimulus(true, 'R');
+      checkLightStimulus(true, 'G');
+      checkAwake = accelJerkFeedback();
+      Serial.print("Check pre-warning count: ");
+      Serial.println(i);
+      if(checkAwake == false){
+        offAllStimulus();
+        awokenMsg();
+        return;
+      }
     }
-    checkVibrationStimulus(false);
-    checkLightStimulus(false,'R');
-    Serial.println("Sally Beauty has awoken!");
-    //delay(5000);//prevent loop immediately exit
+    offAllStimulus();
+    while(checkAwake==true){
+      checkVibrationStimulus(true);
+      checkLightStimulus(true, 'R');
+      delay(400);
+      checkVibrationStimulus(false);
+      checkLightStimulus(false, 'R');
+      delay(300);
+      checkAwake = accelJerkFeedback();
+    }
+    offAllStimulus();
+    awokenMsg();
   }  
+}
+void awokenMsg(){
+  Serial.println("Sally Beauty has awoken!!");
 }
 void checkLightStimulus(boolean onOff, char color){
   if(onOff == true){
@@ -209,7 +248,7 @@ void testCases(int test){
     delay(200);
   }
   else if(test == 3){
-    Serial.print("BPM detected: ");
+    //Serial.print("BPM detected: ");
     Serial.println(BPM);
   }
   else if(test == 4){
@@ -218,11 +257,20 @@ void testCases(int test){
     imu.a.x, imu.a.y, imu.a.z,
     imu.g.x, imu.g.y, imu.g.z);
     snprintf(report, sizeof(report), "Accelerometer: x: %6d y: %6d z: %6d",
-    imu.a.x, imu.a.y, imu.a.z);
-    Serial.println(report);*/
+    imu.a.x, imu.a.y, imu.a.z);*/
+    
     total = (map(imu.a.x,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.y,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.z,rawLow, rawHigh,remapLow,remapHigh) )/3;
     Serial.print("Remapped Acceleration reads: ");
-    Serial.println(total);
+    analogWrite(motorPin, motorIntensity);
+    Serial.print(total);
+    Serial.print(" Remapped difference in Acceleration reads: ");
+    Serial.println(abs(pastTotal-total));
+    pastTotal=total;
+    analogWrite(motorPin, motorIntensity);
+    //Serial.println(report);
+    delay(400);
+    analogWrite(motorPin, 0);
+    delay(300);
   }
   else if(test == 5){
     Serial.print("Flex reading: ");
@@ -238,20 +286,21 @@ void checkVibrationStimulus(boolean onOff){
   else{
     analogWrite(motorPin, 0);
     Serial.println("Motor is OFF!");
-    //analogWrite(buzzerPin,0);
   }
 }
 boolean accelJerkFeedback(){
-imu.read();
+  imu.read();
+  
+  total = (map(imu.a.x,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.y,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.z,rawLow, rawHigh,remapLow,remapHigh) )/3;
   if(accelCount == 0){
     pastTotal = total;
-    count++;
+    accelCount++;
   }
-  total = (map(imu.a.x,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.y,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.z,rawLow, rawHigh,remapLow,remapHigh) )/3;
-  if(abs(pastTotal-total)>13){
+  else if(abs(pastTotal-total)>accDiffThreshold){
     Serial.println("Acceleration: ");
-    Serial.println(pastTotal-total);
+    Serial.println(abs(pastTotal-total));
     Serial.println("You jerked!");
+    pastTotal = total;
     checkVibrationStimulus(false);
     return false;
   }
@@ -259,6 +308,10 @@ imu.read();
   pastTotal = total;
   return true;
 }
-
-
+void offAllStimulus(){
+  checkLightStimulus(false, 'R');
+  checkLightStimulus(false, 'G');
+  checkLightStimulus(false, 'B');
+  checkVibrationStimulus(false);
+}
 

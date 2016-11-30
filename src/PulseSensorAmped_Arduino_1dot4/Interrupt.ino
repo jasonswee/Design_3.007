@@ -111,42 +111,11 @@ ISR(TIMER2_COMPA_vect){                         //ISR(TIMER0_COMPA_vect){  //ISR
     checkLowBPM = true;
   }*/
 
-  //Check buttonread 
-  accelRunBackgroun();
 
   
   sei();                                   // enable interrupts when youre done!
 }// end isr
-void accelRunBackgroun(){
-  //imu.read();
-  /*snprintf(report, sizeof(report), "A: %6d %6d %6d    G: %6d %6d %6d",
-    imu.a.x, imu.a.y, imu.a.z,
-    imu.g.x, imu.g.y, imu.g.z);*/
-  //snprintf(report, sizeof(report), "Accelerometer: x: %6d y: %6d z: %6d",
-  //imu.a.x, imu.a.y, imu.a.z);
-  //Serial.println(report);
-/*
-  total = (map(imu.a.x,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.y,rawLow, rawHigh,remapLow,remapHigh) + map(imu.a.z,rawLow, rawHigh,remapLow,remapHigh) )/3;
-  
-  Serial.println(total);
-  if(accelCount == 0){
-    pastTotal = total;
-  }
-  accelCount++;
-  if(abs(pastTotal-total)>1){
-    Serial.println(total);
-    Serial.println("You are moving!");
-    //checkAwake = false;
-    pastTotal = total;
-  }
-  /*if(abs(pastTotal-total)>2){
-    Serial.println(total);
-    Serial.println("You jerked!");
-    checkAwake = false;
-  }*/
-  
-  //Serial.println(readX);
-}
+
 
 
 
