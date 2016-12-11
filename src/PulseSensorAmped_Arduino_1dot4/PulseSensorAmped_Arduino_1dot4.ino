@@ -14,6 +14,7 @@ https://github.com/WorldFamousElectronics/PulseSensor_Amped_Arduino/blob/master/
 */
 #include <Wire.h>
 #include <LSM6.h>
+#include "pitches.h"
 
 LSM6 imu;
 
@@ -68,17 +69,38 @@ const int rawHigh = 32767;
 const int remapLow = 0;
 const int remapHigh = 10;
 int accelCount = 0;
-const int accDiffThreshold = 2;
+const int accDiffThreshold = 0;
 
 //Flex Sensor
-int flexVoltageThreshold = 7000;
+int flexVoltageThreshold = 5000;
 const int flexPin = A6;    
 const int rawAnalogLow = 0;
 const int rawAnalogHigh = 1023;
 const int remapFlexLow = 0;
 const int remapFlexHigh = 10000;
 
+// notes in the melody:
+const int buzzerPin = 13;
+int melody[] = {
+  NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+};
+int melody_jjb[] = {
+  NOTE_E4, NOTE_E4, NOTE_E4, NOTE_E4, NOTE_E4, NOTE_E4, NOTE_E4, NOTE_G4,NOTE_C4, NOTE_D4, NOTE_E4  , NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4, NOTE_F4,NOTE_E4, NOTE_E4, NOTE_E4, NOTE_E4, NOTE_D4, NOTE_D4,NOTE_E4, NOTE_D4,NOTE_G4      //NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+};
+// note durations: 4 = quarter note, 8 = eighth note, etc.:
+int noteDurations[] = {
+  4, 8, 8, 4, 4, 4, 4, 4
+};
+/*int noteDurations_jjb[] = {
+2, 2, 4, 2, 2, 4, 2, 2, 2, 2, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4
+};*/
+int noteDurations_jjb[] = {
+8, 8, 4, 8, 8, 4, 8, 8, 8, 8, 4, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 4, 4
+};
 
+int tempo = 200;
+char notes[] = "eeeeeeegcde fffffeeeeddedg";
+int duration[] = {1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2};
 void setup(){
   Serial.begin(115200);             // we agree to talk fast!
   interruptSetup();                 // sets up to read Pulse Sensor signal every 2mS 
@@ -87,6 +109,7 @@ void setup(){
   pinMode(ledGPin, OUTPUT);
   pinMode(ledBPin, OUTPUT);
   pinMode(motorPin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
   pinMode(flexPin, INPUT);
   Wire.begin();
   if (!imu.init()){
@@ -98,6 +121,7 @@ void setup(){
   imu.enableDefault();
 
   int delayms = 1000;
+  
   for(int i = 2; i<31;i=i){ //Start up light
     analogWrite(ledRPin, ledIntensity);
     delay(delayms/i);
@@ -112,12 +136,18 @@ void setup(){
     analogWrite(ledBPin, 0);
     delay(delayms/(i++));
   }
-  
+  playMelody(true,1);
 }
 
 void loop(){
+  //tone(13, 200);
+
+checkLightStimulus(true, 'B');
+      checkLightStimulus(true, 'G');
+      delay(3000);
+  
   for(int i = 10; checkAwake == false; i++){//exit when require t
-    recordedBPM = checkHeartBPMWithinOperatingRange(BPM);
+    recordedBPM = checkHeartBPMWithinOperatingRange(45);
     delay(1000);
     if(i==15){
       checkLightStimulus(true, 'B');
@@ -143,7 +173,7 @@ void loop(){
 
   //Test cases
   //delay(1000);
-  //testCases(5);//1 test light. 2 test Vibration. 3 test Heart Rate Sensor. 4 test Accelerometer. 5 Flex Sensor
+  //testCases(5);//1 test light. 2 test Vibration. 3 test Heart Rate Sensor. 4 test Accelerometer. 5 Flex Sensor. 6 Test Melody
 }
 boolean checkFlexStatus(){
   if(map(analogRead(flexPin), rawAnalogLow, rawAnalogHigh, remapFlexLow, remapFlexHigh)<flexVoltageThreshold){
@@ -196,9 +226,11 @@ void checkUserAwake(){
     offAllStimulus();
     while(checkAwake==true){
       checkVibrationStimulus(true);
+      playMelody(true,2);
       checkLightStimulus(true, 'R');
       delay(400);
       checkVibrationStimulus(false);
+      playMelody(false,1);
       checkLightStimulus(false, 'R');
       delay(300);
       checkAwake = accelJerkFeedback();
@@ -277,6 +309,9 @@ void testCases(int test){
     Serial.println(map(analogRead(flexPin), rawAnalogLow, rawAnalogHigh, remapFlexLow, remapFlexHigh));
     checkFlexStatus();
   }
+  else if(test == 6){
+    playMelody(true,1);
+  }
 }
 void checkVibrationStimulus(boolean onOff){
   if(onOff == true){
@@ -313,5 +348,76 @@ void offAllStimulus(){
   checkLightStimulus(false, 'G');
   checkLightStimulus(false, 'B');
   checkVibrationStimulus(false);
+  playMelody(false,1);
+}
+void playMelody(boolean onOff,int choice){
+  if(onOff == true && choice == 1){
+    for (int thisNote = 0; thisNote < 8; thisNote++) {
+  
+      // to calculate the note duration, take one second
+      // divided by the note type.
+      //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+      int noteDuration = 1000 / noteDurations[thisNote];
+      tone(buzzerPin, melody[thisNote], noteDuration);
+  
+      // to distinguish the notes, set a minimum time between them.
+      // the note's duration + 30% seems to work well:
+      int pauseBetweenNotes = noteDuration * 1.30;
+      delay(pauseBetweenNotes);
+      // stop the tone playing:
+      noTone(buzzerPin);
+      Serial.println("Melody is played!");
+    }
+  }
+  else if(onOff == true && choice == 2){
+    tone(buzzerPin, NOTE_DS8);
+    Serial.println("Buzzer is On!");
+  }
+  else if(onOff == false){
+    noTone(buzzerPin);
+    Serial.println("Buzzer is Off!");
+  }
+  else if(onOff == true && choice == 3){
+    /*for (int i = 0; i < sizeof(notes)-1; i++) {
+    if (notes[i] == ' ') {
+      // If find a space it rests
+      delay(duration[i] * tempo);
+    } else {
+      playTheShit(notes[i], duration[i] * tempo);
+    }
+
+    // Pauses between notes
+    delay((tempo*2)*duration[i]);
+  }*/
+  for (int thisNote = 0; thisNote < 26; thisNote++) {
+  
+      // to calculate the note duration, take one second
+      // divided by the note type.
+      //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+      int noteDuration_jjb = 1000 / noteDurations_jjb[thisNote]*2;
+      tone(buzzerPin, melody_jjb[thisNote], noteDuration_jjb);
+  
+      // to distinguish the notes, set a minimum time between them.
+      // the note's duration + 30% seems to work well:
+      int pauseBetweenNotes = noteDuration_jjb * 1.3;
+      delay(pauseBetweenNotes);
+      // stop the tone playing:
+      noTone(buzzerPin);
+      Serial.println("Melody is played!");
+    }
+    }//end else if
+    
+}
+void playTheShit(char note, int duration) {
+  char notesName[] = { 'c', 'd', 'e', 'f', 'g' };
+  int tones[] = { 261, 293, 329, 349, 392 };
+
+  for (int i = 0; i < sizeof(tones); i++) {
+    // Bind the note took from the char array to the array notesName
+    if (note == notesName[i]) {
+      // Bind the notesName to tones
+      tone(buzzerPin, tones[i], duration);
+    }
+  }
 }
 
